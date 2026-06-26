@@ -1,8 +1,10 @@
 # tests/test_wallet.py
 import json
+from types import SimpleNamespace
+
 from typer.testing import CliRunner
 from poly.cli import app
-from poly import config
+from poly import config, context
 import poly.groups.wallet as wallet_mod
 
 runner = CliRunner()
@@ -51,9 +53,12 @@ def test_show_does_not_print_key(tmp_path, monkeypatch):
     p.write_text(json.dumps({"private_key": raw_key}))
     monkeypatch.setattr(config, "CONFIG_PATH", p)
     monkeypatch.setattr(wallet_mod, "CONFIG_PATH", p)
+    # avoid a real network call for the deposit wallet
+    monkeypatch.setattr(context, "secure", lambda ctx: SimpleNamespace(wallet="0xDEPOSIT"))
     result = runner.invoke(app, ["wallet", "show"])
     assert result.exit_code == 0
-    assert "address" in result.output
+    assert "signer_eoa" in result.output
+    assert "0xDEPOSIT" in result.output
     assert raw_key not in result.output
 
 

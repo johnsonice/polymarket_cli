@@ -3,7 +3,6 @@ from typer.testing import CliRunner
 from poly.cli import app
 from poly import context
 from poly.groups import data as data_mod
-from poly import config as config_mod
 
 runner = CliRunner()
 
@@ -29,18 +28,18 @@ def test_value_calls_get_portfolio_values(monkeypatch):
     assert "100.50" in result.output
 
 
-def test_resolve_user_defaults_to_configured_wallet(monkeypatch, tmp_path):
-    """_resolve_user falls back to the wallet derived from the configured key."""
-    # Use a well-known test key (ETH private key, no real funds).
-    test_key = "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
-    from eth_account import Account
-    expected_address = Account.from_key(test_key).address
-
-    p = tmp_path / "config.json"
-    import json
-    p.write_text(json.dumps({"private_key": test_key}))
-    monkeypatch.setattr(config_mod, "CONFIG_PATH", p)
-
+def test_resolve_user_defaults_to_deposit_wallet(monkeypatch):
+    """_resolve_user falls back to the SDK-derived DEPOSIT wallet, not the EOA."""
+    fake_secure = SimpleNamespace(wallet="0xDEPOSITWALLET")
+    monkeypatch.setattr(context, "secure", lambda ctx: fake_secure)
     ctx = SimpleNamespace(obj=SimpleNamespace(private_key=None))
-    resolved = data_mod._resolve_user(ctx, address=None)
-    assert resolved == expected_address
+    assert data_mod._resolve_user(ctx, address=None) == "0xDEPOSITWALLET"
+
+
+def test_resolve_user_prefers_explicit_address(monkeypatch):
+    """An explicit address wins and never builds a secure client."""
+    def _boom(ctx):
+        raise AssertionError("secure() must not be called when an address is given")
+    monkeypatch.setattr(context, "secure", _boom)
+    ctx = SimpleNamespace(obj=SimpleNamespace(private_key=None))
+    assert data_mod._resolve_user(ctx, address="0xABC") == "0xABC"

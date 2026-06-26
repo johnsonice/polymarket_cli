@@ -4,9 +4,10 @@
 import typer
 from eth_account import Account
 
-from ..config import CONFIG_PATH, load_config, save_config, load_settings
-from ..output import emit
+from .. import context as _context
+from ..config import CONFIG_PATH, load_config, save_config
 from ..context import CliContext
+from ..output import emit
 
 app = typer.Typer(no_args_is_help=True, help="Manage the signer key (config.json).")
 
@@ -21,38 +22,46 @@ def _store_key(key: str) -> str:
     return Account.from_key(key).address
 
 
+def _deposit_wallet(ctx: typer.Context) -> str:
+    """The SDK-derived deposit wallet that actually holds funds (network call)."""
+    try:
+        return str(_context.secure(ctx).wallet)
+    except Exception as exc:  # never let a network/auth hiccup break `show`
+        return f"(unavailable: {type(exc).__name__})"
+
+
 @app.command()
 def create(ctx: typer.Context, force: bool = typer.Option(False, "--force")) -> None:
     """Generate a new random wallet and save it."""
     if load_config(path=CONFIG_PATH).get("private_key") and not force:
         raise SystemExit("A key already exists. Use --force to overwrite.")
-    acct = Account.create()
-    addr = _store_key(acct.key.hex())
-    emit(_fmt(ctx), {"address": addr, "config": str(CONFIG_PATH)})
+    eoa = _store_key(Account.create().key.hex())
+    emit(_fmt(ctx), {"signer_eoa": eoa, "config": str(CONFIG_PATH),
+                     "note": "run `poly wallet show` to see your deposit wallet"})
 
 
 @app.command("import")
 def import_key(ctx: typer.Context, private_key: str = typer.Argument(...)) -> None:
     """Import an existing private key."""
-    addr = _store_key(private_key)
-    emit(_fmt(ctx), {"address": addr, "config": str(CONFIG_PATH)})
+    eoa = _store_key(private_key)
+    emit(_fmt(ctx), {"signer_eoa": eoa, "config": str(CONFIG_PATH),
+                     "note": "run `poly wallet show` to see your deposit wallet"})
 
 
 @app.command()
 def show(ctx: typer.Context) -> None:
-    """Show wallet address + config path (never prints the key)."""
+    """Show your signer EOA and deposit wallet (never prints the key)."""
     cfg = load_config(path=CONFIG_PATH)
     key = cfg.get("private_key")
-    addr = Account.from_key(key).address if key else None
-    emit(_fmt(ctx), {"address": addr, "config": str(CONFIG_PATH)})
+    eoa = Account.from_key(key).address if key else None
+    deposit = _deposit_wallet(ctx) if key else None
+    emit(_fmt(ctx), {"signer_eoa": eoa, "deposit_wallet": deposit, "config": str(CONFIG_PATH)})
 
 
 @app.command()
 def address(ctx: typer.Context) -> None:
-    """Print the wallet address."""
-    pk = ctx.obj.private_key if isinstance(ctx.obj, CliContext) else None
-    settings = load_settings(private_key=pk)
-    emit(_fmt(ctx), {"address": Account.from_key(settings.private_key).address})
+    """Print your deposit wallet address (the account that holds funds)."""
+    emit(_fmt(ctx), {"address": str(_context.secure(ctx).wallet)})
 
 
 @app.command()
