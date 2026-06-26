@@ -67,16 +67,19 @@ def sell(ctx: typer.Context,
 
 
 def main() -> int:
-    import click
+    try:
+        import click as _click_mod
+    except ModuleNotFoundError:
+        from typer import _click as _click_mod  # type: ignore[no-redef]
     from polymarket import PolymarketError
     from .output import print_error
     try:
         app(standalone_mode=False)
         return 0
-    except (click.exceptions.Abort, KeyboardInterrupt):
+    except (_click_mod.exceptions.Abort, KeyboardInterrupt):
         print_error(_OUTPUT["fmt"], "aborted")
         return 1
-    except click.exceptions.ClickException as exc:  # usage errors
+    except _click_mod.exceptions.ClickException as exc:  # usage errors
         exc.show()
         return exc.exit_code
     except SystemExit as exc:
