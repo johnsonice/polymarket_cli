@@ -1,11 +1,24 @@
-# poly
+<p align="center">
+  <img src="assets/banner.svg" alt="poly — trade Polymarket from your terminal" width="100%">
+</p>
 
-A friendly command-line tool for trading on **Polymarket** from your deposit wallet.
-Set up a wallet, check your balances, search for markets by keyword, and place orders —
-as readable tables or `-o json` for scripts and agents.
+<p align="center">
+  <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11%2B-3776AB?logo=python&logoColor=white">
+  <img alt="managed with uv" src="https://img.shields.io/badge/managed%20with-uv-7c3aed?logo=uv&logoColor=white">
+  <img alt="built on polymarket-client" src="https://img.shields.io/badge/built%20on-polymarket--client-6366f1">
+  <img alt="status beta" src="https://img.shields.io/badge/status-beta-f59e0b">
+  <img alt="tests 114 passing" src="https://img.shields.io/badge/tests-114%20passing-22c55e">
+</p>
 
-Built on the official **`polymarket-client`** SDK (`Polymarket/py-sdk`), which trades from the
-deterministic deposit wallet (signature type 3 / POLY_1271). 
+<p align="center">
+  A friendly CLI for trading on <b>Polymarket</b> from your deposit wallet — set up a wallet,
+  search markets by keyword, and place orders, as readable tables or <code>-o json</code> for scripts and agents.
+</p>
+
+<p align="center">
+  Built on the official <b><code>polymarket-client</code></b> SDK (<code>Polymarket/py-sdk</code>), trading from the
+  deterministic deposit wallet (signature type 3 / POLY_1271).
+</p>
 
 ---
 
@@ -64,6 +77,15 @@ uv run poly --help
 ## The flow
 
 A full session goes: **① set up your wallet → ② check your account → ③ find a market → ④ trade.**
+
+```mermaid
+flowchart LR
+    A["① Set up<br/>wallet import"] --> B["② Check<br/>balance · positions"]
+    B --> C["③ Find<br/>markets search"]
+    C --> D["④ Trade<br/>buy · sell"]
+    classDef step fill:#0b1020,stroke:#34d399,stroke-width:1.5px,color:#e2e8f0,rx:8,ry:8;
+    class A,B,C,D step;
+```
 
 ### ① Set up your wallet
 
