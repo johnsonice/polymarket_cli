@@ -1,5 +1,6 @@
 # Secrets — never commit
 .env
+config.json          # a real key lives here if copied from config.example.json
 
 # Python
 __pycache__/

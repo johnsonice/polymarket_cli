@@ -30,6 +30,9 @@ poly wallet import 0x<your-signer-key>
 Your key is stored in `~/.config/polymarket/config.json` (file mode `600`). The deposit wallet is
 derived from it automatically. A project `.env` file is **not** read.
 
+See [`config.example.json`](config.example.json) for the file format. You can copy it to
+`~/.config/polymarket/config.json` and fill in your key by hand instead of running `poly setup`.
+
 **Key resolution order:** `--private-key` flag → `POLYMARKET_PRIVATE_KEY` env → config file.
 
 ## Quick start
