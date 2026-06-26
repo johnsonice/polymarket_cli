@@ -63,11 +63,12 @@ In `pyproject.toml`, set:
 ```toml
 dependencies = [
     "polymarket-client==0.1.0b9",
+    "python-dotenv>=1.0",
     "typer>=0.12",
     "eth-account>=0.13",
 ]
 ```
-Remove `python-dotenv`. Keep `[project.scripts] poly = "poly.cli:main"`.
+Add `typer` and `eth-account`. **Keep `python-dotenv` for now** — the old `config.py` still imports it until Task 2 rewrites `config.py`; Task 2 removes the dependency. Keep `[project.scripts] poly = "poly.cli:main"`.
 
 - [ ] **Step 2: Sync env**
 
@@ -123,7 +124,16 @@ if __name__ == "__main__":
 Run: `uv run pytest tests/test_cli_smoke.py -v`
 Expected: PASS.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 7: Remove the obsolete argparse CLI test**
+
+The old `tests/test_cli.py` exercises the now-removed argparse `run_order`/`build_parser`; it will fail against the Typer app. Its safety cases are re-established in Task 8 (`test_trade.py`) and Task 10 (`test_buy_sell.py`). Remove it so the suite stays green:
+```bash
+git rm tests/test_cli.py
+```
+Run: `uv run pytest -q`
+Expected: all remaining tests pass.
+
+- [ ] **Step 8: Commit**
 
 ```bash
 git add pyproject.toml poly/cli.py tests/test_cli_smoke.py uv.lock
@@ -274,10 +284,16 @@ def build_secure_client(settings: Settings):
 Run: `uv run pytest tests/test_config.py -v`
 Expected: PASS (4 tests).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Drop python-dotenv (the new config.py no longer uses it)**
+
+Remove `"python-dotenv>=1.0"` from `pyproject.toml` `dependencies`, then:
+Run: `uv sync --extra dev`
+Then confirm nothing imports it: `grep -rn "dotenv" poly/` → no results.
+
+- [ ] **Step 6: Commit**
 
 ```bash
-git add poly/config.py tests/test_config.py
+git add poly/config.py tests/test_config.py pyproject.toml uv.lock
 git commit -m "refactor: config-file wallet model with flag>env>file key resolution"
 ```
 
@@ -1354,11 +1370,11 @@ git commit -m "feat: data positions/value commands"
 - Modify: `README.md`
 - Test: whole suite
 
-- [ ] **Step 1: Confirm safety coverage moved, then remove obsolete test**
+- [ ] **Step 1: Confirm safety coverage moved (test_cli.py was already removed in Task 1)**
 
-Verify `tests/test_trade.py` + `tests/test_buy_sell.py` + `tests/test_clob_trade.py` cover every safety case the old `tests/test_cli.py` did (dry-run-no-post, side-aware market mapping, confirm gating, approvals retry, max_spend default, tick rounding to 0/1). Then:
+Verify `tests/test_trade.py` + `tests/test_buy_sell.py` + `tests/test_clob_trade.py` cover every safety case the old `tests/test_cli.py` did (dry-run-no-post, side-aware market mapping, confirm gating, approvals retry, max_spend default, tick rounding to 0/1). Confirm `tests/test_cli.py` no longer exists (removed in Task 1):
 ```bash
-git rm tests/test_cli.py
+test ! -e tests/test_cli.py && echo "ok: already removed"
 ```
 
 - [ ] **Step 2: Run the full suite with coverage**
