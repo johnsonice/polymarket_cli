@@ -25,3 +25,6 @@ def test_buy_dry_run(monkeypatch):
     monkeypatch.setattr(context, "public", lambda ctx: FakePub())
     result = runner.invoke(app, ["buy", "--token-id", "111", "--size", "5", "--price", "0.5", "--dry-run"])
     assert result.exit_code == 0
+    assert "BUY" in result.output
+    assert "111" in result.output
+    assert "dry_run" in result.output
