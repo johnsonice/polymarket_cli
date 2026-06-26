@@ -1,6 +1,6 @@
 # poly/context.py
 import typer
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from . import config
 
@@ -8,7 +8,7 @@ from . import config
 @dataclass
 class CliContext:
     output: str = "table"
-    private_key: str | None = None
+    private_key: str | None = field(default=None, repr=False)
     signature_type: int | None = None
     _public: object = None
     _secure: object = None
