@@ -1,48 +1,31 @@
-"""Unit tests for environment loading."""
-
+import json
 import pytest
+from poly import config
 
-from poly.config import Settings, load_settings
+
+def test_resolve_prefers_flag_then_env_then_config():
+    assert config.resolve_private_key(flag="0xf", env="0xe", config="0xc") == "0xf"
+    assert config.resolve_private_key(flag=None, env="0xe", config="0xc") == "0xe"
+    assert config.resolve_private_key(flag=None, env=None, config="0xc") == "0xc"
+    assert config.resolve_private_key() is None
 
 
-def test_load_settings_requires_private_key():
+def test_save_config_is_chmod_600(tmp_path):
+    p = tmp_path / "config.json"
+    config.save_config({"private_key": "0xabc", "signature_type": 3}, path=p)
+    assert json.loads(p.read_text())["private_key"] == "0xabc"
+    assert (p.stat().st_mode & 0o777) == 0o600
+
+
+def test_load_settings_requires_key(tmp_path, monkeypatch):
+    monkeypatch.delenv("POLYMARKET_PRIVATE_KEY", raising=False)
     with pytest.raises(SystemExit):
-        load_settings(env={})
+        config.load_settings(path=tmp_path / "missing.json")
 
 
-def test_load_settings_normalizes_0x_prefix():
-    settings = load_settings(env={"POLYMARKET_PRIVATE_KEY": "abc123"})
-    assert settings.private_key == "0xabc123"
-
-
-def test_load_settings_keeps_existing_0x_prefix():
-    settings = load_settings(env={"POLYMARKET_PRIVATE_KEY": "0xabc123"})
-    assert settings.private_key == "0xabc123"
-
-
-def test_load_settings_reads_optional_fields():
-    settings = load_settings(
-        env={
-            "POLYMARKET_PRIVATE_KEY": "0xkey",
-            "POLYMARKET_WALLET_ADDRESS": "0xwallet",
-            "POLYMARKET_RELAYER_API_KEY": "rk",
-            "POLYMARKET_RELAYER_API_KEY_ADDRESS": "0xrelayer",
-        }
-    )
-    assert settings.wallet_address == "0xwallet"
-    assert settings.relayer_api_key == "rk"
-    assert settings.relayer_api_key_address == "0xrelayer"
-
-
-def test_load_settings_blank_optionals_become_none():
-    settings = load_settings(
-        env={"POLYMARKET_PRIVATE_KEY": "0xkey", "POLYMARKET_WALLET_ADDRESS": "   "}
-    )
-    assert settings.wallet_address is None
-
-
-def test_settings_is_frozen():
-    settings = load_settings(env={"POLYMARKET_PRIVATE_KEY": "0xkey"})
-    with pytest.raises(Exception):
-        settings.private_key = "mutated"  # type: ignore[misc]
-    assert isinstance(settings, Settings)
+def test_load_settings_normalizes_0x_and_defaults_type(tmp_path):
+    p = tmp_path / "config.json"
+    config.save_config({"private_key": "abc"}, path=p)
+    s = config.load_settings(path=p)
+    assert s.private_key == "0xabc"
+    assert s.signature_type == 3
