@@ -11,11 +11,53 @@ deterministic deposit wallet (signature type 3 / POLY_1271).
 
 ## Install
 
+**Prerequisite:** [`uv`](https://docs.astral.sh/uv/) — it manages Python for you, so you don't need a
+separate Python install.
+
 ```bash
-uv sync --extra dev
+# macOS / Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Windows (PowerShell): irm https://astral.sh/uv/install.ps1 | iex
 ```
 
-> Examples use `poly`. If it isn't on your `PATH`, prefix with `uv run` (e.g. `uv run poly markets search ...`).
+### Option A — install as a global command (recommended)
+
+Install straight from GitHub — no clone needed — and get a `poly` command available everywhere:
+
+```bash
+uv tool install git+https://github.com/johnsonice/polymarket_cli.git
+```
+
+Or from a local clone:
+
+```bash
+git clone https://github.com/johnsonice/polymarket_cli.git
+cd polymarket_cli
+uv tool install .          # add --editable to track your local source changes live
+```
+
+Verify, then jump to **The flow** below:
+
+```bash
+poly --help
+```
+
+> - If your shell can't find `poly` afterward, run `uv tool update-shell` and restart the terminal
+>   (uv installs commands into `~/.local/bin`).
+> - If install complains about a prerelease dependency, append `--prerelease allow`.
+> - Update later with `uv tool upgrade poly-cli`; remove with `uv tool uninstall poly-cli`.
+
+### Option B — run from source (for development)
+
+```bash
+git clone https://github.com/johnsonice/polymarket_cli.git
+cd polymarket_cli
+uv sync --extra dev        # creates .venv with dev deps
+uv run poly --help
+```
+
+> With Option B there's no global `poly` command — prefix every example below with `uv run`
+> (e.g. `uv run poly markets search "world cup"`).
 
 ---
 
