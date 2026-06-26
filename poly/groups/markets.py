@@ -30,13 +30,17 @@ def _market_row(market) -> dict:
 
 @app.command()
 def search(ctx: typer.Context, query: str = typer.Argument(...), limit: int = 10) -> None:
-    """Find markets by keyword (searches events and their markets)."""
+    """Find markets by keyword. ``--limit`` caps the number of markets shown.
+
+    Each matched event contains several markets, so we fetch the matching events
+    and then cap the flattened market list to ``limit`` rows.
+    """
     rows = []
     for result in collect(_context.public(ctx).search(q=query, page_size=limit)):
         for event in getattr(result, "events", None) or []:
             for market in getattr(event, "markets", None) or []:
                 rows.append(_market_row(market))
-    emit(ctx.obj.output, rows, columns=MARKET_COLUMNS)
+    emit(ctx.obj.output, rows[:limit], columns=MARKET_COLUMNS)
 
 
 @app.command()

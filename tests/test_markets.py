@@ -29,7 +29,10 @@ def _page(items):
 
 class FakePub:
     def search(self, q=None, page_size=10):
-        event = SimpleNamespace(markets=[_market(question=f"match for {q}")])
+        markets = [_market(question=f"match for {q}", yes="111")] + [
+            _market(question=f"extra {i}", slug=f"extra-{i}") for i in range(8)
+        ]
+        event = SimpleNamespace(markets=markets)
         return _page([SimpleNamespace(events=[event], tags=[], profiles=[])])
 
     def get_market(self, id=None, slug=None, url=None):
@@ -49,6 +52,13 @@ def test_search_flattens_events_to_market_rows(monkeypatch):
     assert result.exit_code == 0
     assert "match for world cup" in result.output
     assert "111" in result.output  # yes token id is surfaced for trading
+
+
+def test_search_respects_limit(monkeypatch):
+    _use_fake(monkeypatch)
+    result = runner.invoke(app, ["-o", "json", "markets", "search", "x", "--limit", "2"])
+    assert result.exit_code == 0
+    assert result.output.count('"slug"') == 2  # 9 markets available, capped to 2
 
 
 def test_get_by_slug_returns_row(monkeypatch):
