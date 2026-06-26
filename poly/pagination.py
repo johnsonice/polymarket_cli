@@ -1,7 +1,13 @@
 """Uniform collection over the SDK's Paginator objects."""
 
+from typing import Any, Protocol
 
-def collect(paginator, limit: int | None = None, all_: bool = False) -> list:
+
+class _Paginator(Protocol):
+    def first_page(self) -> Any: ...
+
+
+def collect(paginator: _Paginator, limit: int | None = None, all_: bool = False) -> list:
     page = paginator.first_page()
     items = list(getattr(page, "items", []) or [])
     while all_ and getattr(page, "has_next", False):

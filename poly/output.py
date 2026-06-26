@@ -3,9 +3,10 @@
 import json
 import sys
 from decimal import Decimal
+from typing import Any
 
 
-def to_jsonable(obj):
+def to_jsonable(obj: Any) -> Any:
     if hasattr(obj, "model_dump"):
         return to_jsonable(obj.model_dump(mode="json"))
     if isinstance(obj, Decimal):
@@ -17,7 +18,7 @@ def to_jsonable(obj):
     return obj
 
 
-def _render_table(data) -> str:
+def _render_table(data: Any) -> str:
     data = to_jsonable(data)
     if isinstance(data, list):
         if not data:
@@ -33,7 +34,7 @@ def _render_table(data) -> str:
     return str(data)
 
 
-def emit(fmt: str, data) -> None:
+def emit(fmt: str, data: Any) -> None:
     if fmt == "json":
         print(json.dumps(to_jsonable(data), indent=2))
     else:

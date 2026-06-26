@@ -238,7 +238,6 @@ def test_submit_retries_after_allowance_error(monkeypatch):
     # Simulate user typing YES for the approvals confirm
     monkeypatch.setattr("builtins.input", lambda _: "YES")
 
-    from poly import orders as poly_orders
     signed = _fake_signed()
     result = trade._submit(client, signed)
 
