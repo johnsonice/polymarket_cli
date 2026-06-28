@@ -12,13 +12,14 @@
 </p>
 
 <p align="center">
-  A friendly CLI for trading on <b>Polymarket</b> from your deposit wallet — set up a wallet,
+  A friendly CLI for trading on <b>Polymarket</b> from your API wallet — set up a wallet,
   search markets by keyword, and place orders, as readable tables or <code>-o json</code> for scripts and agents.
 </p>
 
 <p align="center">
-  Built on the official <b><code>polymarket-client</code></b> SDK (<code>Polymarket/py-sdk</code>), trading from the
-  deterministic deposit wallet (signature type 3 / POLY_1271).
+  Built on the official <b><code>polymarket-client</code></b> SDK (<code>Polymarket/py-sdk</code>), trading from your
+  deterministic <b>API wallet</b> — the SDK's signature-type-3 deposit wallet, which Polymarket's website labels
+  "for API use only — do not send funds".
 </p>
 
 ---
@@ -90,7 +91,7 @@ flowchart LR
 
 ### ① Set up your wallet
 
-Store your signer key once (the deposit wallet is derived from it automatically):
+Store your signer key once (your API wallet is derived from it automatically):
 
 ```bash
 poly setup                              # interactive — paste your key when prompted
@@ -102,15 +103,19 @@ Resolution order: `--private-key` flag → `POLYMARKET_PRIVATE_KEY` env → conf
 (See [`config.example.json`](config.example.json) for the format.)
 
 ```bash
-poly wallet show        # your deposit wallet address + config path (never prints the key)
-poly wallet address     # just the address
+poly wallet show        # your signer EOA + api_wallet address + config path (never prints the key)
+poly wallet address     # just the api_wallet address
 ```
+
+> **`api_wallet`** is your Polymarket account — it holds your funds and trades. It's the address the website
+> labels *"for API use only — do not send funds."* Add money through the website's **Deposit** flow, **not** by
+> sending crypto to `api_wallet` directly.
 
 ### ② Check your account
 
 ```bash
 poly clob balance --asset-type collateral     # your USDC cash
-poly data positions                           # what you hold (defaults to your wallet)
+poly data positions                           # what you hold (defaults to your api_wallet)
 poly data value                               # portfolio value
 ```
 
@@ -212,7 +217,7 @@ poly -o json data positions 0x9377... | jq '.[].cash_pnl'
 ```json
 {
   "private_key": "0x...",
-  "wallet_address": "0x..."   // optional — omit to use the default deposit wallet
+  "wallet_address": "0x..."   // optional — omit to use the default api_wallet
 }
 ```
 

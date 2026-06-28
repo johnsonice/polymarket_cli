@@ -28,8 +28,8 @@ def test_value_calls_get_portfolio_values(monkeypatch):
     assert "100.50" in result.output
 
 
-def test_resolve_user_defaults_to_deposit_wallet(monkeypatch):
-    """_resolve_user falls back to the SDK-derived DEPOSIT wallet, not the EOA."""
+def test_resolve_user_defaults_to_api_wallet(monkeypatch):
+    """_resolve_user falls back to the SDK-derived api_wallet, not the EOA."""
     fake_secure = SimpleNamespace(wallet="0xDEPOSITWALLET")
     monkeypatch.setattr(context, "secure", lambda ctx: fake_secure)
     ctx = SimpleNamespace(obj=SimpleNamespace(private_key=None))

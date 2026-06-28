@@ -11,6 +11,14 @@ from ..output import emit
 
 app = typer.Typer(no_args_is_help=True, help="Manage the signer key (config.json).")
 
+# The active wallet is the address Polymarket's website labels "Address — for API
+# use only. Do not send funds." It IS your account/maker (it holds funds and
+# trades), but you must not transfer to it directly — deposit via the website.
+API_WALLET_NOTE = (
+    "api_wallet is for API/trading use only; do NOT send funds to it directly. "
+    "Deposit via the Polymarket website."
+)
+
 
 def _fmt(ctx: typer.Context) -> str:
     return ctx.obj.output if isinstance(ctx.obj, CliContext) else "table"
@@ -22,8 +30,9 @@ def _store_key(key: str) -> str:
     return Account.from_key(key).address
 
 
-def _deposit_wallet(ctx: typer.Context) -> str:
-    """The SDK-derived deposit wallet that actually holds funds (network call)."""
+def _api_wallet(ctx: typer.Context) -> str:
+    """The SDK-derived API wallet (Polymarket's "API use only" address) that
+    holds funds and trades (network call)."""
     try:
         return str(_context.secure(ctx).wallet)
     except Exception as exc:  # never let a network/auth hiccup break `show`
@@ -37,7 +46,7 @@ def create(ctx: typer.Context, force: bool = typer.Option(False, "--force")) -> 
         raise SystemExit("A key already exists. Use --force to overwrite.")
     eoa = _store_key(Account.create().key.hex())
     emit(_fmt(ctx), {"signer_eoa": eoa, "config": str(CONFIG_PATH),
-                     "note": "run `poly wallet show` to see your deposit wallet"})
+                     "note": "run `poly wallet show` to see your api_wallet"})
 
 
 @app.command("import")
@@ -45,22 +54,29 @@ def import_key(ctx: typer.Context, private_key: str = typer.Argument(...)) -> No
     """Import an existing private key."""
     eoa = _store_key(private_key)
     emit(_fmt(ctx), {"signer_eoa": eoa, "config": str(CONFIG_PATH),
-                     "note": "run `poly wallet show` to see your deposit wallet"})
+                     "note": "run `poly wallet show` to see your api_wallet"})
 
 
 @app.command()
 def show(ctx: typer.Context) -> None:
-    """Show your signer EOA and deposit wallet (never prints the key)."""
+    """Show your signer EOA and api_wallet (never prints the key).
+
+    api_wallet is the address Polymarket's website labels "for API use only — do
+    not send funds"; it holds your funds and trades. Deposit via the website.
+    """
     cfg = load_config(path=CONFIG_PATH)
     key = cfg.get("private_key")
     eoa = Account.from_key(key).address if key else None
-    deposit = _deposit_wallet(ctx) if key else None
-    emit(_fmt(ctx), {"signer_eoa": eoa, "deposit_wallet": deposit, "config": str(CONFIG_PATH)})
+    api_wallet = _api_wallet(ctx) if key else None
+    fields = {"signer_eoa": eoa, "api_wallet": api_wallet}
+    if api_wallet:
+        fields = {**fields, "note": API_WALLET_NOTE}
+    emit(_fmt(ctx), {**fields, "config": str(CONFIG_PATH)})
 
 
 @app.command()
 def address(ctx: typer.Context) -> None:
-    """Print your deposit wallet address (the account that holds funds)."""
+    """Print your api_wallet address (holds funds and trades; do NOT send funds to it)."""
     emit(_fmt(ctx), {"address": str(_context.secure(ctx).wallet)})
 
 

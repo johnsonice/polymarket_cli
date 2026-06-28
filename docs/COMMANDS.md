@@ -29,7 +29,7 @@ Put global options **before** the command: `poly [GLOBAL] COMMAND [ARGS]`.
 
 **Key resolution order:** `--private-key` flag → `POLYMARKET_PRIVATE_KEY` env → `~/.config/polymarket/config.json`. The project `.env` is **not** read.
 
-**Two wallet addresses** (see §6 gotchas): the **signer EOA** (your private key's raw address, signs orders) vs the **deposit wallet** (SDK-derived proxy that actually holds USDC + positions; what you deposit to and what polymarket.com shows).
+**Two wallet addresses** (see §6 gotchas): the **signer EOA** (your private key's raw address, signs orders) vs the **api_wallet** (SDK-derived account that holds USDC + positions and that orders execute from; what polymarket.com labels "Address — for API use only, do not send funds"). You do **not** send funds to `api_wallet` directly — deposit via the website.
 
 ```bash
 poly -o json data value          # global option before the command
@@ -68,10 +68,10 @@ poly wallet import 0xABC...
 ```
 
 ### `wallet show`
-Print your **signer EOA** and **deposit wallet** + config path (never the key).
+Print your **signer EOA** and **api_wallet** (+ a do-not-send-funds note) + config path (never the key).
 
 ### `wallet address`
-Print only your **deposit wallet** address (the account that holds funds).
+Print only your **api_wallet** address (the account that holds funds; do not send funds to it directly).
 
 ### `wallet reset`
 Delete the saved config (`config.json`).
@@ -261,15 +261,15 @@ poly clob balance --asset-type conditional --token 472367...
 List your account trades. Columns: `matched_at`, `side`, `outcome`, `price`, `size`, `status`.
 
 ### `data positions [ADDRESS]`
-List positions. `ADDRESS` is optional and **defaults to your deposit wallet** (not the EOA).
+List positions. `ADDRESS` is optional and **defaults to your api_wallet** (not the EOA).
 
 | Option / Arg | Req | Default | Meaning |
 |---|---|---|---|
-| `<ADDRESS>` | optional | your deposit wallet | Any wallet to inspect. |
+| `<ADDRESS>` | optional | your api_wallet | Any wallet to inspect. |
 | `--limit INT` | optional | `20` | Max positions. |
 
 ### `data value [ADDRESS]`
-Portfolio value. `ADDRESS` optional, defaults to your deposit wallet.
+Portfolio value. `ADDRESS` optional, defaults to your api_wallet.
 
 ```bash
 poly data value
@@ -281,7 +281,7 @@ poly data positions 0x9377... --limit 50
 ## 6. Key concepts & gotchas
 
 - **Always `uv run poly …`** — Python ≥3.11 is required; the system `python3` may be older.
-- **Signer EOA vs deposit wallet** — `wallet address` and the `data` default both use the **deposit wallet** (holds funds). The EOA only signs and is normally empty. They are different addresses.
+- **Signer EOA vs api_wallet** — `wallet address` and the `data` default both use the **api_wallet** (holds funds & trades; the website's "API use only" address — do not send funds to it directly). The EOA only signs and is normally empty. They are different addresses.
 - **Balances are 6-decimal base units on-chain** — `clob balance` converts to human units for you (and shows `raw`); other raw SDK numbers may need ÷ 1,000,000.
 - **Event slug ≠ market slug** — discover the event, then drill to its market slug (`…-usa`, `…-draw`, …) before trading.
 - **`--dry-run` first** — every trade path supports it; it builds + signs + previews **without submitting**. Real submits require a typed `YES` unless `--yes`.

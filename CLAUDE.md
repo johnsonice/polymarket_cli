@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-`poly` is a CLI for placing buy/sell orders on Polymarket from a deposit wallet, built on Typer. Source lives in
+`poly` is a CLI for placing buy/sell orders on Polymarket from your API wallet (the SDK's type-3 deposit wallet), built on Typer. Source lives in
 `poly/` (~1 100 lines across 10 modules + 4 group sub-apps); mirror test modules live in `tests/`.
 
 ## Commands
@@ -49,7 +49,10 @@ the tool was built to avoid.
 - Auth is a single signer private key. The SDK **derives the deposit wallet** (signature type 3 / POLY_1271)
   deterministically from it — this is fixed and is not configurable. `--signature-type` was intentionally
   removed because `SecureClient.create()` has no such parameter; the deposit-wallet derivation is the only
-  supported path.
+  supported path. **Naming:** user-facing output calls this address `api_wallet` (matching the website's
+  "Address — for API use only, do not send funds" label); it is the SDK's type-3 deposit wallet and is the
+  maker/account that holds funds. Do not confuse it with the website's separate *deposit address* (an
+  EIP-7702 smart-account you send USDC to), which is server-allocated and not exposed by the py-sdk.
 - Key resolution order: `--private-key` flag → `POLYMARKET_PRIVATE_KEY` env → `~/.config/polymarket/config.json`.
   The project `.env` file is **not read**. There is no `.env.example`.
 - Use `--wallet <addr>` to trade from a non-default wallet address.

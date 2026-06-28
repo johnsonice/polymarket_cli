@@ -12,8 +12,8 @@ POSITION_COLUMNS = ["title", "outcome", "size", "avg_price", "cur_price", "curre
 
 
 def _resolve_user(ctx: typer.Context, address: str | None) -> str:
-    """Default to your deposit wallet — the SDK-derived account that holds your
-    funds — not the signer EOA (which is empty)."""
+    """Default to your api_wallet — the SDK-derived account that holds your funds
+    (the website's "API use only" address) — not the signer EOA (which is empty)."""
     if address:
         return address
     return str(_context.secure(ctx).wallet)
@@ -21,7 +21,7 @@ def _resolve_user(ctx: typer.Context, address: str | None) -> str:
 
 @app.command()
 def positions(ctx: typer.Context, address: str = typer.Argument(None), limit: int = 20) -> None:
-    """List positions for ADDRESS (default: your deposit wallet)."""
+    """List positions for ADDRESS (default: your api_wallet)."""
     user = _resolve_user(ctx, address)
     emit(ctx.obj.output, collect(_context.public(ctx).list_positions(user=user, page_size=limit)),
          columns=POSITION_COLUMNS)
@@ -29,6 +29,6 @@ def positions(ctx: typer.Context, address: str = typer.Argument(None), limit: in
 
 @app.command()
 def value(ctx: typer.Context, address: str = typer.Argument(None)) -> None:
-    """Portfolio value for ADDRESS (default: your deposit wallet)."""
+    """Portfolio value for ADDRESS (default: your api_wallet)."""
     user = _resolve_user(ctx, address)
     emit(ctx.obj.output, _context.public(ctx).get_portfolio_values(user=user))
