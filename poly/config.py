@@ -103,6 +103,32 @@ def resolve_environment():
     return dataclasses.replace(PRODUCTION, **overrides) if overrides else PRODUCTION
 
 
+def resolve_relayer_api_key(private_key: str):
+    """Build the SDK RelayerApiKey from env, or None.
+
+    Polymarket's deposit-wallet (gasless) flow — required to SUBMIT live orders and to
+    run gasless trading approvals — needs a Relayer/Builder API key. That key is a UUID
+    minted at polymarket.com (Settings -> API Keys) and registered to your signer EOA;
+    it is NOT derivable from the private key, so it must be supplied explicitly via
+    POLYMARKET_RELAYER_API_KEY. POLYMARKET_RELAYER_ADDRESS overrides the on-key address
+    (defaults to the signer's EOA, which is what the key is registered to).
+
+    Unset (the default) returns None => the EOA flow: public reads and LOCAL signing
+    work, but live order submission is rejected by CLOB ("maker address not allowed,
+    use the deposit wallet flow")."""
+    key = os.environ.get("POLYMARKET_RELAYER_API_KEY")
+    if not key:
+        return None
+    from polymarket import RelayerApiKey
+
+    address = os.environ.get("POLYMARKET_RELAYER_ADDRESS")
+    if not address:
+        from eth_account import Account
+
+        address = Account.from_key(private_key).address
+    return RelayerApiKey(key=key, address=address)
+
+
 def build_public_client():
     from polymarket import PublicClient
     return PublicClient(resolve_environment())
@@ -114,4 +140,5 @@ def build_secure_client(settings: Settings):
         private_key=settings.private_key,
         wallet=settings.wallet_address,
         environment=resolve_environment(),
+        api_key=resolve_relayer_api_key(settings.private_key),
     )

@@ -62,3 +62,27 @@ def test_resolve_environment_overrides_only_set_urls(monkeypatch):
     assert env.chain_id == PRODUCTION.chain_id
     assert env.collateral_token == PRODUCTION.collateral_token
     assert env.standard_exchange == PRODUCTION.standard_exchange
+
+
+def test_resolve_relayer_api_key_none_without_env(monkeypatch):
+    monkeypatch.delenv("POLYMARKET_RELAYER_API_KEY", raising=False)
+    assert config.resolve_relayer_api_key("0x" + "1" * 64) is None
+
+
+def test_resolve_relayer_api_key_derives_address_from_key(monkeypatch):
+    from eth_account import Account
+    pk = "0x" + "1" * 64
+    monkeypatch.setenv("POLYMARKET_RELAYER_API_KEY", "uuid-abc")
+    monkeypatch.delenv("POLYMARKET_RELAYER_ADDRESS", raising=False)
+    ak = config.resolve_relayer_api_key(pk)
+    assert ak is not None
+    assert ak.key == "uuid-abc"
+    assert ak.address == Account.from_key(pk).address  # derived from signer when not set
+
+
+def test_resolve_relayer_api_key_honors_explicit_address(monkeypatch):
+    monkeypatch.setenv("POLYMARKET_RELAYER_API_KEY", "uuid-abc")
+    monkeypatch.setenv("POLYMARKET_RELAYER_ADDRESS", "0xDeAdBeef00000000000000000000000000000000")
+    ak = config.resolve_relayer_api_key("0x" + "1" * 64)
+    # SDK checksums (EIP-55) the address; compare case-insensitively
+    assert ak.address.lower() == "0xdeadbeef00000000000000000000000000000000"
