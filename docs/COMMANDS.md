@@ -31,7 +31,7 @@ Put global options **before** the command: `poly [GLOBAL] COMMAND [ARGS]`.
 
 **Two wallet addresses** (see §6 gotchas): the **signer EOA** (your private key's raw address, signs orders) vs the **api_wallet** (SDK-derived account that holds USDC + positions and that orders execute from; what polymarket.com labels "Address — for API use only, do not send funds"). You do **not** send funds to `api_wallet` directly — deposit via the website.
 
-> **⚠️ `api_wallet` is a *derived guess* and can be the WRONG address.** One private key deterministically derives several distinct on-chain addresses — the EOA plus up to four contract wallets (POLY_PROXY / GNOSIS_SAFE / **two** variants of the type-3 deposit wallet: `uups` and `beacon`). With no `wallet_address` set, the SDK computes the deposit wallet from the *current* factory (`derive_current_deposit_wallet_address_sync`), which is **not guaranteed** to be the wallet your account actually deployed and funded. In a real account we saw `api_wallet` resolve to the `beacon` variant (0 USDC) while the funds — and the account the CLOB/website recognize — lived on the `uups` variant. **Never deposit to a CLI-printed address; deposit only via polymarket.com. Verify `wallet show`'s `api_wallet` equals the deposit address on polymarket.com/settings, and if it differs, pin the correct one via `"wallet_address": "0x…"` in `config.json`** (there is no `--wallet` flag).
+> **⚠️ `api_wallet` is a *derived guess* and can be the WRONG address.** One private key deterministically derives several distinct on-chain addresses — the EOA plus up to four contract wallets (POLY_PROXY / GNOSIS_SAFE / **two** variants of the type-3 deposit wallet: `uups` and `beacon`). With no `wallet_address` set, the SDK computes the deposit wallet from the *current* factory (`derive_current_deposit_wallet_address_sync`), which is **not guaranteed** to be the wallet your account actually deployed and funded. In a real account we saw `api_wallet` resolve to the `beacon` variant (0 USDC) while the funds — and the account the CLOB/website recognize — lived on the `uups` variant. **Never deposit to a CLI-printed address; deposit only via polymarket.com. Verify `wallet show`'s `api_wallet` equals the deposit address on polymarket.com/settings, and if it differs, pin the correct one via `"wallet_address": "0x…"` in `config.json`** (there is no `--wallet` flag). At runtime the CLI surfaces this warning **in the output itself** — a `note` field on `wallet show`, `wallet address`, and `clob balance` — so an agent reads it at call time, not just here.
 
 ```bash
 poly -o json data value          # global option before the command
@@ -70,10 +70,10 @@ poly wallet import 0xABC...
 ```
 
 ### `wallet show`
-Print your **signer EOA** and **api_wallet** (+ a do-not-send-funds note) + config path (never the key).
+Print your **signer EOA** and **api_wallet** + config path (never the key). Output includes a `note` warning that `api_wallet` is a derived guess that may not be your real funded account.
 
 ### `wallet address`
-Print only your **api_wallet** address (the account that holds funds; do not send funds to it directly).
+Print only your **api_wallet** address (do not send funds to it directly). Output includes the same `note` warning.
 
 ### `wallet reset`
 Delete the saved config (`config.json`).
@@ -247,7 +247,7 @@ Cancel **ALL** open orders.
 ## 5. Account & balances
 
 ### `clob balance`
-Show your balance for an asset type, in **human units** (USDC / shares); also returns `raw` base units.
+Show your balance for an asset type, in **human units** (USDC / shares); also returns `raw` base units and a `note` warning (a 0/unexpected balance may mean the CLI is on the wrong derived wallet — verify via `wallet show`).
 
 | Option | Req | Default | Meaning |
 |---|---|---|---|
